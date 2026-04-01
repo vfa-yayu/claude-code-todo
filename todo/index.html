@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TODO</title>
+  <style>
+    /* ─── CSS Variables ─── */
+    :root {
+      --bg:        #f0f2f5;
+      --surface:   #ffffff;
+      --surface2:  #f8f9fb;
+      --border:    #e2e8f0;
+      --text:      #1a202c;
+      --text-sub:  #718096;
+      --accent:    #6366f1;
+      --accent-h:  #4f46e5;
+      --high:      #ef4444;
+      --med:       #f59e0b;
+      --low:       #22c55e;
+      --danger:    #ef4444;
+      --shadow:    0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.06);
+      --radius:    12px;
+      --trans:     .18s ease;
+    }
+    [data-dark] {
+      --bg:       #0f1117;
+      --surface:  #1a1d27;
+      --surface2: #22263a;
+      --border:   #2d3148;
+      --text:     #e2e8f0;
+      --text-sub: #94a3b8;
+      --shadow:   0 1px 3px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.3);
+    }
+
+    /* ─── Reset & Base ─── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      transition: background var(--trans), color var(--trans);
+    }
+    input, textarea, select, button { font: inherit; }
+    button { cursor: pointer; border: none; background: none; }
+
+    /* ─── Layout ─── */
+    .app { max-width: 780px; margin: 0 auto; padding: 24px 16px 80px; }
+
+    /* ─── Header ─── */
+    header {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 28px;
+    }
+    .logo {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: var(--accent);
+      display: grid; place-items: center; flex-shrink: 0;
+    }
+    .logo svg { width: 22px; height: 22px; fill: #fff; }
+    .title { font-size: 1.5rem; font-weight: 700; flex: 1; }
+    .search-wrap {
+      position: relative; flex: 1 1 220px; max-width: 260px;
+    }
+    .search-wrap svg {
+      position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+      width: 16px; height: 16px; fill: var(--text-sub); pointer-events: none;
+    }
+    #search {
+      width: 100%; padding: 8px 12px 8px 34px;
+      border: 1.5px solid var(--border); border-radius: 8px;
+      background: var(--surface); color: var(--text);
+      outline: none; transition: border-color var(--trans);
+    }
+    #search:focus { border-color: var(--accent); }
+    .icon-btn {
+      width: 40px; height: 40px; border-radius: 10px;
+      display: grid; place-items: center;
+      background: var(--surface); border: 1.5px solid var(--border);
+      color: var(--text-sub); transition: all var(--trans);
+    }
+    .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .icon-btn svg { width: 18px; height: 18px; fill: currentColor; }
+
+    /* ─── Stats ─── */
+    .stats {
+      display: grid; grid-template-columns: repeat(4,1fr); gap: 12px;
+      margin-bottom: 24px;
+    }
+    .stat {
+      background: var(--surface); border-radius: var(--radius);
+      padding: 14px 16px; box-shadow: var(--shadow);
+      border-left: 4px solid transparent;
+      transition: transform var(--trans);
+    }
+    .stat:hover { transform: translateY(-2px); }
+    .stat.all   { border-color: var(--accent); }
+    .stat.active{ border-color: var(--med); }
+    .stat.done  { border-color: var(--low); }
+    .stat.over  { border-color: var(--high); }
+    .stat-num { font-size: 1.75rem; font-weight: 700; line-height: 1; }
+    .stat-lbl { font-size: .78rem; color: var(--text-sub); margin-top: 4px; }
+
+    /* ─── Add Form ─── */
+    .add-card {
+      background: var(--surface); border-radius: var(--radius);
+      box-shadow: var(--shadow); margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .add-top {
+      display: flex; align-items: center; gap: 10px; padding: 14px 16px;
+    }
+    #new-title {
+      flex: 1; border: none; outline: none;
+      background: transparent; color: var(--text);
+      font-size: 1rem;
+    }
+    #new-title::placeholder { color: var(--text-sub); }
+    .add-btn {
+      padding: 7px 18px; border-radius: 8px;
+      background: var(--accent); color: #fff;
+      font-weight: 600; font-size: .9rem;
+      transition: background var(--trans), transform var(--trans);
+    }
+    .add-btn:hover { background: var(--accent-h); }
+    .add-btn:active { transform: scale(.97); }
+
+    .add-extra {
+      border-top: 1.5px solid var(--border);
+      padding: 12px 16px;
+      display: none; gap: 10px; flex-wrap: wrap; align-items: flex-end;
+    }
+    .add-card.open .add-extra { display: flex; }
+    .field { display: flex; flex-direction: column; gap: 4px; flex: 1 1 140px; }
+    .field label { font-size: .78rem; color: var(--text-sub); font-weight: 600; }
+    .field input, .field select, .field textarea {
+      padding: 7px 10px; border: 1.5px solid var(--border);
+      border-radius: 8px; background: var(--surface2); color: var(--text);
+      outline: none; transition: border-color var(--trans);
+    }
+    .field input:focus, .field select:focus, .field textarea:focus {
+      border-color: var(--accent);
+    }
+    .field textarea { resize: vertical; min-height: 60px; font-size: .9rem; }
+
+    /* ─── Filters ─── */
+    .filters {
+      display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap;
+      align-items: center;
+    }
+    .filter-btn {
+      padding: 6px 14px; border-radius: 20px; font-size: .85rem; font-weight: 600;
+      border: 1.5px solid var(--border); color: var(--text-sub);
+      background: var(--surface);
+      transition: all var(--trans);
+    }
+    .filter-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .filter-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .sort-select {
+      margin-left: auto; padding: 6px 10px;
+      border: 1.5px solid var(--border); border-radius: 8px;
+      background: var(--surface); color: var(--text-sub);
+      font-size: .82rem; outline: none; cursor: pointer;
+    }
+
+    /* ─── Todo List ─── */
+    #list { display: flex; flex-direction: column; gap: 8px; }
+    .empty {
+      text-align: center; padding: 60px 0; color: var(--text-sub);
+    }
+    .empty svg { width: 64px; height: 64px; fill: var(--border); margin-bottom: 12px; }
+    .empty p { font-size: 1rem; }
+
+    /* ─── Todo Item ─── */
+    .todo {
+      background: var(--surface); border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border-left: 4px solid transparent;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 0;
+      transition: transform var(--trans), opacity var(--trans), box-shadow var(--trans);
+      position: relative;
+      animation: slideIn .2s ease;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .todo.high   { border-color: var(--high); }
+    .todo.medium { border-color: var(--med); }
+    .todo.low    { border-color: var(--low); }
+    .todo.done   { opacity: .65; }
+    .todo.done .todo-title { text-decoration: line-through; color: var(--text-sub); }
+    .todo:hover  { box-shadow: 0 4px 20px rgba(0,0,0,.12); }
+
+    .drag-handle {
+      width: 32px; display: grid; place-items: center;
+      color: var(--border); cursor: grab; border-radius: var(--radius) 0 0 var(--radius);
+      transition: color var(--trans);
+    }
+    .drag-handle:hover { color: var(--text-sub); }
+    .drag-handle svg { width: 16px; height: 16px; fill: currentColor; }
+
+    .todo-body { padding: 14px 12px 12px 0; min-width: 0; }
+    .todo-top { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+
+    .check-wrap { flex-shrink: 0; }
+    .check-wrap input[type=checkbox] { display: none; }
+    .check-wrap label {
+      width: 20px; height: 20px; border-radius: 6px;
+      border: 2px solid var(--border); display: grid; place-items: center;
+      cursor: pointer; transition: all var(--trans); flex-shrink: 0;
+    }
+    .check-wrap input:checked + label {
+      background: var(--low); border-color: var(--low);
+    }
+    .check-wrap label::after {
+      content: ''; width: 5px; height: 9px;
+      border: 2px solid #fff; border-top: none; border-left: none;
+      transform: rotate(45deg) scale(0);
+      transition: transform var(--trans);
+    }
+    .check-wrap input:checked + label::after { transform: rotate(45deg) scale(1); }
+
+    .todo-title {
+      font-size: .97rem; font-weight: 600; flex: 1;
+      word-break: break-word; transition: color var(--trans);
+    }
+    .todo-title[contenteditable=true] {
+      outline: 1px dashed var(--accent); border-radius: 4px; padding: 0 4px;
+    }
+
+    .badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+    .badge {
+      font-size: .72rem; font-weight: 700; padding: 2px 8px; border-radius: 20px;
+      letter-spacing: .02em;
+    }
+    .badge.priority-high   { background: #fee2e2; color: #dc2626; }
+    .badge.priority-medium { background: #fef3c7; color: #d97706; }
+    .badge.priority-low    { background: #dcfce7; color: #16a34a; }
+    [data-dark] .badge.priority-high   { background: #3f1515; color: #fca5a5; }
+    [data-dark] .badge.priority-medium { background: #3d2800; color: #fcd34d; }
+    [data-dark] .badge.priority-low    { background: #14340f; color: #86efac; }
+    .badge.category  { background: var(--surface2); color: var(--text-sub); border: 1px solid var(--border); }
+    .badge.due       { background: var(--surface2); color: var(--text-sub); }
+    .badge.overdue   { background: #fee2e2; color: #dc2626; }
+    [data-dark] .badge.overdue { background: #3f1515; color: #fca5a5; }
+
+    .todo-desc {
+      font-size: .83rem; color: var(--text-sub); margin-top: 6px;
+      line-height: 1.5; word-break: break-word;
+    }
+
+    .todo-actions {
+      display: flex; flex-direction: column; justify-content: center;
+      gap: 4px; padding: 10px 12px 10px 4px;
+    }
+    .act-btn {
+      width: 30px; height: 30px; border-radius: 8px;
+      display: grid; place-items: center;
+      color: var(--text-sub); transition: all var(--trans);
+    }
+    .act-btn svg { width: 15px; height: 15px; fill: currentColor; }
+    .act-btn:hover { background: var(--surface2); color: var(--accent); }
+    .act-btn.del:hover { color: var(--danger); }
+
+    /* ─── Dragging ─── */
+    .todo.dragging { opacity: .4; box-shadow: none; }
+    .todo.drag-over { transform: scale(1.01); border-color: var(--accent) !important; }
+
+    /* ─── Edit Modal ─── */
+    .overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.45);
+      display: grid; place-items: center; z-index: 100;
+      animation: fadeIn .15s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .modal {
+      background: var(--surface); border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.25);
+      padding: 28px; width: min(520px, 92vw);
+      animation: popIn .2s ease;
+    }
+    @keyframes popIn {
+      from { transform: scale(.93) translateY(12px); opacity: 0; }
+      to   { transform: scale(1) translateY(0); opacity: 1; }
+    }
+    .modal h2 { font-size: 1.15rem; font-weight: 700; margin-bottom: 20px; }
+    .modal .fields { display: flex; flex-direction: column; gap: 14px; }
+    .modal .field input, .modal .field select, .modal .field textarea {
+      width: 100%;
+    }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
+    .btn-ghost {
+      padding: 9px 20px; border-radius: 8px; font-weight: 600;
+      border: 1.5px solid var(--border); color: var(--text-sub);
+      transition: all var(--trans);
+    }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-primary {
+      padding: 9px 20px; border-radius: 8px; font-weight: 600;
+      background: var(--accent); color: #fff;
+      transition: background var(--trans);
+    }
+    .btn-primary:hover { background: var(--accent-h); }
+
+    /* ─── Scrollbar ─── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 540px) {
+      .stats { grid-template-columns: repeat(2,1fr); }
+      header { flex-wrap: wrap; }
+      .search-wrap { order: 3; max-width: 100%; flex: 1 1 100%; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <header>
+    <div class="logo">
+      <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+    </div>
+    <h1 class="title">TODO</h1>
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+      <input id="search" type="search" placeholder="検索...">
+    </div>
+    <button class="icon-btn" id="dark-toggle" title="ダーク/ライトモード切替">
+      <svg id="sun-icon" viewBox="0 0 24 24"><path d="M6.76 4.84l-1.8-1.79-1.41 1.41 1.79 1.79 1.42-1.41zM4 10.5H1v2h3v-2zm9-9.95h-2V3.5h2V.55zm7.45 3.91l-1.41-1.41-1.79 1.79 1.41 1.41 1.79-1.79zm-3.21 13.7l1.79 1.8 1.41-1.41-1.8-1.79-1.4 1.4zM20 10.5v2h3v-2h-3zm-8-5c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm-1 16.95h2V19.5h-2v2.95zm-7.45-3.91l1.41 1.41 1.79-1.8-1.41-1.41-1.79 1.8z"/></svg>
+      <svg id="moon-icon" viewBox="0 0 24 24" style="display:none"><path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg>
+    </button>
+  </header>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat all"    id="stat-all">  <div class="stat-num" id="n-all">0</div>  <div class="stat-lbl">すべて</div></div>
+    <div class="stat active" id="stat-act">  <div class="stat-num" id="n-act">0</div>  <div class="stat-lbl">未完了</div></div>
+    <div class="stat done"   id="stat-done"> <div class="stat-num" id="n-done">0</div> <div class="stat-lbl">完了</div></div>
+    <div class="stat over"   id="stat-over"> <div class="stat-num" id="n-over">0</div> <div class="stat-lbl">期限切れ</div></div>
+  </div>
+
+  <!-- Add Form -->
+  <div class="add-card" id="add-card">
+    <div class="add-top">
+      <input id="new-title" type="text" placeholder="＋ 新しいタスクを入力... (Enter で追加)">
+      <button class="add-btn" id="add-btn">追加</button>
+    </div>
+    <div class="add-extra">
+      <div class="field">
+        <label>優先度</label>
+        <select id="new-priority">
+          <option value="medium">中</option>
+          <option value="high">高</option>
+          <option value="low">低</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>カテゴリ</label>
+        <input id="new-category" type="text" placeholder="仕事, 個人...">
+      </div>
+      <div class="field">
+        <label>期限</label>
+        <input id="new-due" type="date">
+      </div>
+      <div class="field" style="flex:1 1 100%">
+        <label>メモ</label>
+        <textarea id="new-desc" placeholder="説明を入力..."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters">
+    <button class="filter-btn active" data-filter="all">すべて</button>
+    <button class="filter-btn" data-filter="active">未完了</button>
+    <button class="filter-btn" data-filter="done">完了</button>
+    <button class="filter-btn" data-filter="overdue">期限切れ</button>
+    <select class="sort-select" id="sort-select">
+      <option value="order">並び順</option>
+      <option value="created">作成日</option>
+      <option value="due">期限</option>
+      <option value="priority">優先度</option>
+    </select>
+  </div>
+
+  <!-- List -->
+  <div id="list"></div>
+
+</div>
+
+<!-- Edit Modal -->
+<div class="overlay" id="modal" style="display:none" onclick="closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h2>タスクを編集</h2>
+    <div class="fields">
+      <div class="field"><label>タイトル</label><input id="e-title" type="text"></div>
+      <div class="field"><label>メモ</label><textarea id="e-desc"></textarea></div>
+      <div class="field"><label>優先度</label>
+        <select id="e-priority">
+          <option value="high">高</option>
+          <option value="medium">中</option>
+          <option value="low">低</option>
+        </select>
+      </div>
+      <div class="field"><label>カテゴリ</label><input id="e-category" type="text"></div>
+      <div class="field"><label>期限</label><input id="e-due" type="date"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal()">キャンセル</button>
+      <button class="btn-primary" onclick="saveEdit()">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ─── State ─── */
+let todos = JSON.parse(localStorage.getItem('todos') || '[]');
+let filter = 'all';
+let sortBy = 'order';
+let query  = '';
+let editingId = null;
+let dark = localStorage.getItem('dark') === '1';
+let dragSrc = null;
+
+/* ─── Init ─── */
+if (dark) document.documentElement.setAttribute('data-dark', '');
+updateDarkIcons();
+render();
+
+/* ─── Persistence ─── */
+function save() {
+  localStorage.setItem('todos', JSON.stringify(todos));
+}
+
+/* ─── UUID ─── */
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2);
+}
+
+/* ─── Priority sort value ─── */
+const PRIO = { high: 0, medium: 1, low: 2 };
+
+/* ─── Add Todo ─── */
+function addTodo() {
+  const title = document.getElementById('new-title').value.trim();
+  if (!title) return;
+  const todo = {
+    id:        uid(),
+    title,
+    desc:      document.getElementById('new-desc').value.trim(),
+    completed: false,
+    priority:  document.getElementById('new-priority').value,
+    category:  document.getElementById('new-category').value.trim(),
+    due:       document.getElementById('new-due').value,
+    createdAt: new Date().toISOString(),
+    order:     todos.length,
+  };
+  todos.unshift(todo);
+  // fix order
+  todos.forEach((t, i) => t.order = i);
+  save(); render();
+  // reset
+  ['new-title','new-desc','new-category','new-due'].forEach(id =>
+    document.getElementById(id).value = '');
+  document.getElementById('new-priority').value = 'medium';
+  document.getElementById('add-card').classList.remove('open');
+  document.getElementById('new-title').focus();
+}
+
+/* ─── Toggle ─── */
+function toggle(id) {
+  const t = todos.find(t => t.id === id);
+  if (!t) return;
+  t.completed = !t.completed;
+  save(); render();
+}
+
+/* ─── Delete ─── */
+function deleteTodo(id) {
+  todos = todos.filter(t => t.id !== id);
+  save(); render();
+}
+
+/* ─── Edit Modal ─── */
+function openEdit(id) {
+  editingId = id;
+  const t = todos.find(t => t.id === id);
+  document.getElementById('e-title').value    = t.title;
+  document.getElementById('e-desc').value     = t.desc || '';
+  document.getElementById('e-priority').value = t.priority;
+  document.getElementById('e-category').value = t.category || '';
+  document.getElementById('e-due').value      = t.due || '';
+  document.getElementById('modal').style.display = 'grid';
+  document.getElementById('e-title').focus();
+}
+function closeModal(e) {
+  if (e && e.target !== document.getElementById('modal')) return;
+  document.getElementById('modal').style.display = 'none';
+  editingId = null;
+}
+function saveEdit() {
+  const t = todos.find(t => t.id === editingId);
+  if (!t) return;
+  t.title    = document.getElementById('e-title').value.trim() || t.title;
+  t.desc     = document.getElementById('e-desc').value.trim();
+  t.priority = document.getElementById('e-priority').value;
+  t.category = document.getElementById('e-category').value.trim();
+  t.due      = document.getElementById('e-due').value;
+  save(); render();
+  document.getElementById('modal').style.display = 'none';
+  editingId = null;
+}
+
+/* ─── Overdue check ─── */
+function isOverdue(t) {
+  return !t.completed && t.due && new Date(t.due) < new Date(new Date().toDateString());
+}
+
+/* ─── Filter & Sort ─── */
+function getVisible() {
+  let list = todos.filter(t => {
+    if (query) {
+      const q = query.toLowerCase();
+      if (!t.title.toLowerCase().includes(q) &&
+          !(t.desc||'').toLowerCase().includes(q) &&
+          !(t.category||'').toLowerCase().includes(q)) return false;
+    }
+    if (filter === 'active')  return !t.completed;
+    if (filter === 'done')    return  t.completed;
+    if (filter === 'overdue') return  isOverdue(t);
+    return true;
+  });
+
+  if (sortBy === 'due') {
+    list.sort((a, b) => {
+      if (!a.due && !b.due) return 0;
+      if (!a.due) return 1;
+      if (!b.due) return -1;
+      return a.due.localeCompare(b.due);
+    });
+  } else if (sortBy === 'priority') {
+    list.sort((a, b) => PRIO[a.priority] - PRIO[b.priority]);
+  } else if (sortBy === 'created') {
+    list.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  } else {
+    list.sort((a, b) => a.order - b.order);
+  }
+  return list;
+}
+
+/* ─── Render ─── */
+function render() {
+  // stats
+  const today = new Date(new Date().toDateString());
+  const all    = todos.length;
+  const done   = todos.filter(t => t.completed).length;
+  const active = all - done;
+  const over   = todos.filter(isOverdue).length;
+  document.getElementById('n-all').textContent  = all;
+  document.getElementById('n-act').textContent  = active;
+  document.getElementById('n-done').textContent = done;
+  document.getElementById('n-over').textContent = over;
+
+  const list = getVisible();
+  const el   = document.getElementById('list');
+
+  if (!list.length) {
+    el.innerHTML = `<div class="empty">
+      <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z"/></svg>
+      <p>タスクがありません</p>
+    </div>`;
+    return;
+  }
+
+  el.innerHTML = list.map(t => {
+    const over = isOverdue(t);
+    const dueLabel = t.due
+      ? `<span class="badge ${over ? 'overdue' : 'due'}">${formatDate(t.due)}${over ? ' 期限切れ' : ''}</span>`
+      : '';
+    const catBadge = t.category
+      ? `<span class="badge category">${esc(t.category)}</span>`
+      : '';
+    const priMap = { high:'高', medium:'中', low:'低' };
+    return `
+    <div class="todo ${t.priority} ${t.completed ? 'done' : ''}"
+         id="todo-${t.id}"
+         draggable="true"
+         ondragstart="dragStart(event,'${t.id}')"
+         ondragover="dragOver(event,'${t.id}')"
+         ondragleave="dragLeave(event,'${t.id}')"
+         ondrop="drop(event,'${t.id}')"
+         ondragend="dragEnd()">
+      <div class="drag-handle">
+        <svg viewBox="0 0 24 24"><path d="M11 18c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm-2-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6 4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+      </div>
+      <div class="todo-body">
+        <div class="todo-top">
+          <div class="check-wrap">
+            <input type="checkbox" id="chk-${t.id}" ${t.completed?'checked':''} onchange="toggle('${t.id}')">
+            <label for="chk-${t.id}"></label>
+          </div>
+          <span class="todo-title">${esc(t.title)}</span>
+        </div>
+        ${t.desc ? `<div class="todo-desc">${esc(t.desc)}</div>` : ''}
+        <div class="badges">
+          <span class="badge priority-${t.priority}">${priMap[t.priority]}</span>
+          ${catBadge}
+          ${dueLabel}
+        </div>
+      </div>
+      <div class="todo-actions">
+        <button class="act-btn" onclick="openEdit('${t.id}')" title="編集">
+          <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+        </button>
+        <button class="act-btn del" onclick="deleteTodo('${t.id}')" title="削除">
+          <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ─── Helpers ─── */
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function formatDate(d) {
+  const [y,m,day] = d.split('-');
+  return `${m}/${day}`;
+}
+
+/* ─── Drag & Drop ─── */
+function dragStart(e, id) {
+  dragSrc = id;
+  setTimeout(() => document.getElementById('todo-' + id)?.classList.add('dragging'), 0);
+  e.dataTransfer.effectAllowed = 'move';
+}
+function dragOver(e, id) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  document.getElementById('todo-' + id)?.classList.add('drag-over');
+}
+function dragLeave(e, id) {
+  document.getElementById('todo-' + id)?.classList.remove('drag-over');
+}
+function drop(e, id) {
+  e.preventDefault();
+  if (dragSrc === id) return;
+  const srcIdx = todos.findIndex(t => t.id === dragSrc);
+  const dstIdx = todos.findIndex(t => t.id === id);
+  const [item] = todos.splice(srcIdx, 1);
+  todos.splice(dstIdx, 0, item);
+  todos.forEach((t, i) => t.order = i);
+  save(); render();
+}
+function dragEnd() {
+  dragSrc = null;
+  document.querySelectorAll('.dragging,.drag-over').forEach(el => {
+    el.classList.remove('dragging','drag-over');
+  });
+}
+
+/* ─── Dark Mode ─── */
+document.getElementById('dark-toggle').addEventListener('click', () => {
+  dark = !dark;
+  localStorage.setItem('dark', dark ? '1' : '0');
+  if (dark) document.documentElement.setAttribute('data-dark', '');
+  else document.documentElement.removeAttribute('data-dark');
+  updateDarkIcons();
+});
+function updateDarkIcons() {
+  document.getElementById('sun-icon').style.display  = dark ? 'none' : '';
+  document.getElementById('moon-icon').style.display = dark ? ''     : 'none';
+}
+
+/* ─── Events ─── */
+// Add on Enter
+document.getElementById('new-title').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addTodo();
+});
+// Open detail panel on focus
+document.getElementById('new-title').addEventListener('focus', () => {
+  document.getElementById('add-card').classList.add('open');
+});
+document.getElementById('add-btn').addEventListener('click', addTodo);
+
+// Filters
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    filter = btn.dataset.filter;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    render();
+  });
+});
+
+// Sort
+document.getElementById('sort-select').addEventListener('change', e => {
+  sortBy = e.target.value;
+  render();
+});
+
+// Search
+document.getElementById('search').addEventListener('input', e => {
+  query = e.target.value;
+  render();
+});
+
+// Keyboard: Escape closes modal / add panel
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.getElementById('modal').style.display = 'none';
+    document.getElementById('add-card').classList.remove('open');
+    editingId = null;
+  }
+});
+</script>
+</body>
+</html>
